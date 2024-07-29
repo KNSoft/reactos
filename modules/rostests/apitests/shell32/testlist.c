@@ -44,6 +44,7 @@ extern void func_SHLimitInputEdit(void);
 extern void func_SHParseDisplayName(void);
 extern void func_SHSimpleIDListFromPath(void);
 extern void func_SHRestricted(void);
+extern void func_SlimDetoursExample(void);
 
 const struct test winetest_testlist[] =
 {
@@ -88,6 +89,7 @@ const struct test winetest_testlist[] =
     { "SHParseDisplayName", func_SHParseDisplayName },
     { "SHSimpleIDListFromPath", func_SHSimpleIDListFromPath },
     { "SHRestricted", func_SHRestricted },
+    { "SlimDetoursExample", func_SlimDetoursExample },
 
     { 0, 0 }
 };
