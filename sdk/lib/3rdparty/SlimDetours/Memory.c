@@ -1,5 +1,5 @@
 ﻿/*
- * KNSoft SlimDetours (https://github.com/KNSoft/SlimDetours) Memory Management
+ * KNSoft.SlimDetours (https://github.com/KNSoft/KNSoft.SlimDetours) Memory Management
  * Copyright (c) KNSoft.org (https://github.com/KNSoft). All rights reserved.
  * Licensed under the MIT license.
  */
@@ -76,7 +76,7 @@ detour_memory_init(VOID)
 
         NtdllLdrEntry = CONTAINING_RECORD(NtCurrentPeb()->Ldr->InInitializationOrderModuleList.Flink,
                                           LDR_DATA_TABLE_ENTRY,
-                                          InInitializationOrderModuleList);
+                                          InInitializationOrderLinks);
         s_ulSystemRegionLowUpperBound = (ULONG_PTR)NtdllLdrEntry->DllBase + NtdllLdrEntry->SizeOfImage - 1;
         s_ulSystemRegionLowLowerBound = s_ulSystemRegionLowUpperBound - _1GB + 1;
         if (s_ulSystemRegionLowLowerBound < SYSTEM_RESERVED_REGION_LOWEST)

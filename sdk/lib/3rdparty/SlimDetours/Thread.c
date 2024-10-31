@@ -1,5 +1,5 @@
 ﻿/*
- * KNSoft SlimDetours (https://github.com/KNSoft/SlimDetours) Thread management
+ * KNSoft.SlimDetours (https://github.com/KNSoft/KNSoft.SlimDetours) Thread management
  * Copyright (c) KNSoft.org (https://github.com/KNSoft). All rights reserved.
  * Licensed under the MIT license.
  */
@@ -39,7 +39,7 @@ _Try_alloc:
     }
 
     /* Find current process and threads */
-    CurrentPID = NtGetCurrentProcessId();
+    CurrentPID = NtCurrentProcessId();
     pCurrentSPI = pSPI;
     while (pCurrentSPI->UniqueProcessId != CurrentPID)
     {
@@ -72,7 +72,7 @@ _Try_alloc:
 
     /* Suspend threads */
     SuspendedCount = 0;
-    CurrentTID = NtGetCurrentThreadId();
+    CurrentTID = NtCurrentThreadId();
     for (i = 0; i < pCurrentSPI->NumberOfThreads; i++)
     {
         if (pSTI[i].ClientId.UniqueThread == CurrentTID ||

@@ -290,6 +290,6 @@ URL: https://github.com/amd/win-libm
 
 Title: SlimDetours
 Path: sdk/lib/3rdparty/SlimDetours
-Used Version: git commit d0d83130
+Used Version: git commit 7f0732f
 License: MIT (https://spdx.org/licenses/MIT.html)
 URL: https://github.com/KNSoft/KNSoft.SlimDetours

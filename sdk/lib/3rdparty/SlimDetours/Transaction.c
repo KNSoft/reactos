@@ -1,5 +1,5 @@
 ﻿/*
- * KNSoft SlimDetours (https://github.com/KNSoft/SlimDetours) Transaction APIs
+ * KNSoft.SlimDetours (https://github.com/KNSoft/KNSoft.SlimDetours) Transaction APIs
  * Copyright (c) KNSoft.org (https://github.com/KNSoft). All rights reserved.
  * Licensed under the MIT license.
  *
@@ -32,7 +32,7 @@ struct _DETOUR_DELAY_ATTACH
     PCSTR pszFunction;
     PVOID* ppPointer;
     PVOID pDetour;
-    DETOUR_DELAY_ATTACH_CALLBACK pfnCallback;
+    PDETOUR_DELAY_ATTACH_CALLBACK_FN pfnCallback;
     PVOID Context;
 };
 
@@ -46,7 +46,7 @@ static PDETOUR_DELAY_ATTACH g_DelayedAttaches = NULL;
 
 #endif /* (NTDDI_VERSION >= NTDDI_WIN6) */
 
-static HANDLE s_nPendingThreadId = 0; // Thread owning pending transaction.
+static DECLSPEC_ALIGN(SIZE_OF_POINTER) _Interlocked_operand_ HANDLE volatile s_nPendingThreadId = 0; // Thread owning pending transaction.
 static PHANDLE s_phSuspendedThreads = NULL;
 static ULONG s_ulSuspendedThreadCount = 0;
 static PDETOUR_OPERATION s_pPendingOperations = NULL;
@@ -58,7 +58,7 @@ SlimDetoursTransactionBegin(VOID)
     NTSTATUS Status;
 
     // Make sure only one thread can start a transaction.
-    if (_InterlockedCompareExchangePointer(&s_nPendingThreadId, NtGetCurrentThreadId(), 0) != 0)
+    if (_InterlockedCompareExchangePointer(&s_nPendingThreadId, NtCurrentThreadId(), 0) != 0)
     {
         return HRESULT_FROM_NT(STATUS_TRANSACTIONAL_CONFLICT);
     }
@@ -99,7 +99,7 @@ SlimDetoursTransactionAbort(VOID)
     SIZE_T sMem;
     DWORD dwOld;
 
-    if (s_nPendingThreadId != NtGetCurrentThreadId())
+    if (s_nPendingThreadId != NtCurrentThreadId())
     {
         return HRESULT_FROM_NT(STATUS_TRANSACTIONAL_CONFLICT);
     }
@@ -152,7 +152,7 @@ SlimDetoursTransactionCommit(VOID)
     BOOL freed = FALSE;
     ULONG i;
 
-    if (s_nPendingThreadId != NtGetCurrentThreadId())
+    if (s_nPendingThreadId != NtCurrentThreadId())
     {
         return HRESULT_FROM_NT(STATUS_TRANSACTIONAL_CONFLICT);
     }
@@ -281,7 +281,7 @@ SlimDetoursAttach(
     SIZE_T sMem;
     DWORD dwOld;
 
-    if (s_nPendingThreadId != NtGetCurrentThreadId())
+    if (s_nPendingThreadId != NtCurrentThreadId())
     {
         return HRESULT_FROM_NT(STATUS_TRANSACTIONAL_CONFLICT);
     }
@@ -484,7 +484,7 @@ SlimDetoursDetach(
     SIZE_T sMem;
     DWORD dwOld;
 
-    if (s_nPendingThreadId != NtGetCurrentThreadId())
+    if (s_nPendingThreadId != NtCurrentThreadId())
     {
         return HRESULT_FROM_NT(STATUS_TRANSACTIONAL_CONFLICT);
     }
@@ -601,6 +601,7 @@ detour_attach_now(
 }
 
 static
+_Function_class_(LDR_DLL_NOTIFICATION_FUNCTION)
 VOID
 CALLBACK
 detour_dll_notify_proc(
@@ -622,7 +623,7 @@ detour_dll_notify_proc(
     while (pAttach != NULL)
     {
         /* Match Dll name */
-        if (!RtlEqualUnicodeString(&pAttach->usDllName, NotificationData->Loaded.BaseDllName, FALSE))
+        if (!RtlEqualUnicodeString(&pAttach->usDllName, (PUNICODE_STRING)NotificationData->Loaded.BaseDllName, FALSE))
         {
             pPrevAttach = pAttach;
             pAttach = pAttach->pNext;
@@ -682,7 +683,7 @@ SlimDetoursDelayAttach(
     _In_ PVOID pDetour,
     _In_ PCWSTR DllName,
     _In_ PCSTR Function,
-    _In_opt_ __callback DETOUR_DELAY_ATTACH_CALLBACK Callback,
+    _In_opt_ __callback PDETOUR_DELAY_ATTACH_CALLBACK_FN Callback,
     _In_opt_ PVOID Context)
 {
     NTSTATUS Status;
@@ -692,9 +693,13 @@ SlimDetoursDelayAttach(
     PDETOUR_DELAY_ATTACH NewNode;
 
     /* Don't need try/except */
+#ifdef _MSC_VER
 #pragma warning(disable: __WARNING_PROBE_NO_TRY)
+#endif
     Status = RtlRunOnceExecuteOnce(&g_stInitDelayAttach, detour_init_delay_attach, NULL, NULL);
+#ifdef _MSC_VER
 #pragma warning(default: __WARNING_PROBE_NO_TRY)
+#endif
     if (!NT_SUCCESS(Status))
     {
         return HRESULT_FROM_NT(Status);
